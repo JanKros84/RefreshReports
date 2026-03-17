@@ -118,6 +118,23 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="btnStartRefresh.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAC5SURBVDhPY2CgGvjPwBi7xrModq3HhJhVroro0gRB9Gp3
+        h9i1nv9BOGaNx9eYtR7laTONWdHV4QSx6zxCYQbA8RqPSzGrvazQ1WIFWA0AG+L5L2atx6LYdc7C6HpQ
+        AE4DYN5a6/E8Zq1nHLo+OCBkAMJFHttjV/nIoesn3gAIvoqunyQDYtZ6XkHXT7wB5HqB/ECkKBrXeFyK
+        Xeduia4WK4hd52EPdy45SRmcmdZ6FMSs8ewnKzORCwDzlfvAv4esCgAAAABJRU5ErkJggg==
+</value>
+  </data>
+  <data name="btnStopRefresh.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAACxIAAAsSAdLdfvwAAABKSURBVDhPY2AYNOCkufmck+bmf05aWPzHi83N/5wwN5+N
+        rh9kAGHNSIag62fAUEQAo+sfNWCYGEBpQjphYTGLKEMgamai6x84AABs8z3Q1+UPAwAAAABJRU5ErkJg
+        gg==
+</value>
+  </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         AAABAAkAEBAAAAEAIABoBAAAlgAAABgYAAABACAAiAkAAP4EAAAgIAAAAQAgAKgQAACGDgAAMDAAAAEA

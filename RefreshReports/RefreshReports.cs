@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing.Printing;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace RefreshReports
@@ -12,13 +13,17 @@ namespace RefreshReports
         private const string CRW32_PATH = @"C:\Program Files (x86)\Business Objects\Crystal Reports 11.5\crw32.exe";
         private const string INFO_TEXT = "Začnite stlačením tlačidla 'Štart refresh'";
 
+        private volatile bool _isProcessing;
+
         public RefreshReports()
         {
             InitializeComponent();
             lblInfo.Text = INFO_TEXT;
+            btnStopRefresh.Enabled = false;
+            lblVersion.Text = Application.ProductVersion + " \u00A9 KROS a.s.";
         }
 
-        private void btnStartRefresh_Click(object sender, EventArgs e)
+        private async void btnStartRefresh_Click(object sender, EventArgs e)
         {
             try
             {
@@ -30,15 +35,15 @@ namespace RefreshReports
 
                 //TODO : For testing purposes, you can set the path to the folder with reports here and comment FolderBrowserDialog part.
                 string reportsPath = @"c:\reporty";//@"c:\_Projects\OlympGit\Olymp\Reporty\";//string.Empty;// @"c:\reporty";//
-                using (var dialog = new FolderBrowserDialog())
-                {
-                    dialog.Description = "Vyberte priečinok s reportami (*.rpt)";
+                //using (var dialog = new FolderBrowserDialog())
+                //{
+                //    dialog.Description = "Vyberte priečinok s reportami (*.rpt)";
 
-                    if (dialog.ShowDialog() == DialogResult.OK)                    
-                        reportsPath = dialog.SelectedPath;                    
-                    else
-                        return;
-                }
+                //    if (dialog.ShowDialog() == DialogResult.OK)                    
+                //        reportsPath = dialog.SelectedPath;                    
+                //    else
+                //        return;
+                //}
 
                 var files = Directory.GetFiles(reportsPath, "*.rpt");
                 if (files.Length == 0)
@@ -48,7 +53,9 @@ namespace RefreshReports
                 }
 
                 //Main processing of reports
-                var results = ProcesReports(files);
+                _isProcessing = true;
+                btnStopRefresh.Enabled = true;
+                var results = await Task.Run(() => ProcesReports(files));
 
                 new Results(results).ShowDialog(this);
             }
@@ -60,7 +67,32 @@ namespace RefreshReports
             {
                 lblInfo.Text = INFO_TEXT;
                 btnStartRefresh.Enabled = true;
+                btnStopRefresh.Enabled = false;
                 this.Cursor = Cursors.Default;
+            }
+        }
+
+        private void btnStopRefresh_Click(object sender, EventArgs e)
+        {
+            _isProcessing = false;
+            lblInfo.Text = "Spracovanie reportov bolo zastavené užívateľom";
+            btnStopRefresh.Enabled = false;
+        }
+
+        private void RefreshReports_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (_isProcessing)
+            {
+                var result = MessageBox.Show(
+                    "Prebieha spracovanie reportov.\r\nChcete zavrieť aplikáciu?",
+                    "Pozor",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.No)                
+                    e.Cancel = true;                
+                else
+                    _isProcessing = false;
             }
         }
 
@@ -107,6 +139,14 @@ namespace RefreshReports
             return true;
         }
 
+        private void UpdateLabel(string text)
+        {
+            if (this.InvokeRequired)
+                BeginInvoke(new Action<string>(UpdateLabel), text);
+            else
+                lblInfo.Text = text;
+        }
+
         private string ProcesReports(string[] reportFiles)
         {
             var sbInfos = new System.Text.StringBuilder();
@@ -117,20 +157,26 @@ namespace RefreshReports
             var sw = Stopwatch.StartNew();
 
             for (int i = 0; i < reportFiles.Length; i++)
-            {            
+            {
+                if (!_isProcessing) break;
+
                 var file = reportFiles[i];
                 var fileName = Path.GetFileName(file);
-                lblInfo.Text = $"Spracovávám ({i + 1}/{reportFiles.Length}):\r\n\t{fileName}";
-                Application.DoEvents();
+                UpdateLabel($"Spracovávám ({i + 1}/{reportFiles.Length}):\r\n {fileName}");                
                 sbInfos.Append(fileName);
+
                 try
                 {
                     Process process;
                     IntPtr hwndMain;
                     OpenReport(out process, out hwndMain, file);
 
+                    if (!_isProcessing) break;
+
                     var retInfo = ReportOperations.VerifyDatabase(hwndMain);
                     sbInfos.Append($"\t{retInfo}");
+
+                    if (!_isProcessing) break;
 
                     if (CloseAndSaveReport(process, hwndMain))
                     {
@@ -150,7 +196,8 @@ namespace RefreshReports
             sw.Stop();
             string timeElapsed = sw.Elapsed.ToString(@"hh\:mm\:ss");
 
-            var summary = $"Počet spracovaný reportov:\t\t\t{reportFiles.Length}\r\n" +
+            var summary = (_isProcessing ? string.Empty : "!!! Spracovanie reportov bolo zastavené užívateľom !!!\r\n\r\n") +
+                $"Počet spracovaný reportov:\t\t\t{reportFiles.Length}\r\n" +
                             $"Počet aktualizovaných(uložených) reportov:\t{updatedCount}\r\n" +
                             $"Počet chýb:\t{errorsCount}\r\n" +
                             $"Čas spracovania:\t{timeElapsed}" +
