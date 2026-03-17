@@ -35,15 +35,15 @@ namespace RefreshReports
 
                 //TODO : For testing purposes, you can set the path to the folder with reports here and comment FolderBrowserDialog part.
                 string reportsPath = @"c:\reporty";//@"c:\_Projects\OlympGit\Olymp\Reporty\";//string.Empty;// @"c:\reporty";//
-                //using (var dialog = new FolderBrowserDialog())
-                //{
-                //    dialog.Description = "Vyberte priečinok s reportami (*.rpt)";
+                using (var dialog = new FolderBrowserDialog())
+                {
+                    dialog.Description = "Vyberte priečinok s reportami (*.rpt)";
 
-                //    if (dialog.ShowDialog() == DialogResult.OK)                    
-                //        reportsPath = dialog.SelectedPath;                    
-                //    else
-                //        return;
-                //}
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                        reportsPath = dialog.SelectedPath;
+                    else
+                        return;
+                }
 
                 var files = Directory.GetFiles(reportsPath, "*.rpt");
                 if (files.Length == 0)
@@ -89,8 +89,8 @@ namespace RefreshReports
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning);
 
-                if (result == DialogResult.No)                
-                    e.Cancel = true;                
+                if (result == DialogResult.No)
+                    e.Cancel = true;
                 else
                     _isProcessing = false;
             }
@@ -100,9 +100,9 @@ namespace RefreshReports
         {
             //Check if Default printer is FinePrint
             var ps = new PrinterSettings();
-            if (string.IsNullOrEmpty(ps.PrinterName) 
-                || !ps.IsValid 
-                || ps.PrinterName.ToLower() != "fineprint")
+            if (string.IsNullOrEmpty(ps.PrinterName)
+                || !ps.IsValid
+                || !ps.PrinterName.Equals("fineprint", StringComparison.OrdinalIgnoreCase))
             {
                 MessageBox.Show(
                     "Nie je nastavená predvolená tlačiareň na 'FinePrint',\r\nalebo tlačiareň 'FinePrint' je nedostupná.",
@@ -114,20 +114,26 @@ namespace RefreshReports
 
             //Check if some Crystal is already running.
             var existingProcesses = Process.GetProcessesByName("crw32");
-            if (existingProcesses.Length > 0)
+            try
             {
-                MessageBox.Show(
-                    "Crystal Reports (crw32.exe) už beží. Najprv ho zatvorte.",
-                    "Pozor",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return false;
+                if (existingProcesses.Length > 0)
+                {
+                    MessageBox.Show(
+                        "Crystal Reports (crw32.exe) už beží. Najprv ho zatvorte.",
+                        "Pozor",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return false;
+                }
+            }
+            finally
+            {
+                foreach (var p in existingProcesses) p.Dispose();
             }
 
             //Check if Crystal v11.5 is instaled.
             if (!File.Exists(CRW32_PATH))
             {
-                Console.WriteLine();
                 MessageBox.Show(
                     $"Súbor crw32.exe neexistuje.\r\nPravdepodobne nemáte nainštalovaný Crystal Reports ver.11.5.\r\n\r\n{CRW32_PATH}",
                     "Pozor",
@@ -162,26 +168,33 @@ namespace RefreshReports
 
                 var file = reportFiles[i];
                 var fileName = Path.GetFileName(file);
-                UpdateLabel($"Spracovávám ({i + 1}/{reportFiles.Length}):\r\n {fileName}");                
+                UpdateLabel($"Spracovávám ({i + 1}/{reportFiles.Length}):\r\n {fileName}");
                 sbInfos.Append(fileName);
 
                 try
                 {
-                    Process process;
+
+                    Process process = null;
                     IntPtr hwndMain;
                     OpenReport(out process, out hwndMain, file);
-
-                    if (!_isProcessing) break;
-
-                    var retInfo = ReportOperations.VerifyDatabase(hwndMain);
-                    sbInfos.Append($"\t{retInfo}");
-
-                    if (!_isProcessing) break;
-
-                    if (CloseAndSaveReport(process, hwndMain))
+                    try
                     {
-                        sbInfos.Append("\tUPDATED");
-                        updatedCount++;
+                        if (!_isProcessing) break;
+
+                        var retInfo = ReportOperations.VerifyDatabase(hwndMain);
+                        sbInfos.Append($"\t{retInfo}");
+
+                        if (!_isProcessing) break;
+
+                        if (CloseAndSaveReport(process, hwndMain))
+                        {
+                            sbInfos.Append("\tUPDATED");
+                            updatedCount++;
+                        }
+                    }
+                    finally
+                    {
+                        process?.Dispose();
                     }
                 }
                 catch (Exception ex)
@@ -226,6 +239,7 @@ namespace RefreshReports
             psi.UseShellExecute = true;
 
             process = Process.Start(psi);
+            Win32ApiFunctions.AssignToJob(process);
             Thread.Sleep(500);
 
             //Find main window of Crystal and set it to foreground.

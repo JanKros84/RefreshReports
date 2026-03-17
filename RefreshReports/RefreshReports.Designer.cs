@@ -39,7 +39,7 @@
             // 
             this.btnStartRefresh.Image = ((System.Drawing.Image)(resources.GetObject("btnStartRefresh.Image")));
             this.btnStartRefresh.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnStartRefresh.Location = new System.Drawing.Point(43, 55);
+            this.btnStartRefresh.Location = new System.Drawing.Point(43, 57);
             this.btnStartRefresh.Name = "btnStartRefresh";
             this.btnStartRefresh.Size = new System.Drawing.Size(91, 23);
             this.btnStartRefresh.TabIndex = 0;
@@ -51,7 +51,7 @@
             // 
             // lblInfo
             // 
-            this.lblInfo.Location = new System.Drawing.Point(13, 8);
+            this.lblInfo.Location = new System.Drawing.Point(13, 11);
             this.lblInfo.Name = "lblInfo";
             this.lblInfo.Size = new System.Drawing.Size(267, 41);
             this.lblInfo.TabIndex = 1;
@@ -62,7 +62,7 @@
             this.btnStopRefresh.Cursor = System.Windows.Forms.Cursors.AppStarting;
             this.btnStopRefresh.Image = ((System.Drawing.Image)(resources.GetObject("btnStopRefresh.Image")));
             this.btnStopRefresh.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnStopRefresh.Location = new System.Drawing.Point(140, 55);
+            this.btnStopRefresh.Location = new System.Drawing.Point(140, 57);
             this.btnStopRefresh.Name = "btnStopRefresh";
             this.btnStopRefresh.Size = new System.Drawing.Size(91, 23);
             this.btnStopRefresh.TabIndex = 2;
@@ -77,7 +77,7 @@
             this.lblVersion.AutoSize = true;
             this.lblVersion.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.1F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.lblVersion.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.lblVersion.Location = new System.Drawing.Point(101, 80);
+            this.lblVersion.Location = new System.Drawing.Point(101, 81);
             this.lblVersion.Name = "lblVersion";
             this.lblVersion.Size = new System.Drawing.Size(60, 12);
             this.lblVersion.TabIndex = 3;

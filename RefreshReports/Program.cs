@@ -11,6 +11,8 @@ namespace RefreshReports
         [STAThread]
         static void Main()
         {
+            Win32ApiFunctions.CreateKillOnCloseJob();
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new RefreshReports());
