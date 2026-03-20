@@ -31,10 +31,11 @@ namespace RefreshReports
                 if (!ReadyForRunning()) return;
 
                 this.Cursor = Cursors.WaitCursor;
+
                 btnStartRefresh.Enabled = false;
 
                 //TODO : For testing purposes, you can set the path to the folder with reports here and comment FolderBrowserDialog part.
-                string reportsPath = @"c:\reporty";//@"c:\_Projects\OlympGit\Olymp\Reporty\";//string.Empty;// @"c:\reporty";//
+                string reportsPath = string.Empty;// //@"c:\_Projects\OlympGit\Olymp\Reporty\";//string.Empty;// @"c:\reporty";//
                 using (var dialog = new FolderBrowserDialog())
                 {
                     dialog.Description = "Vyberte priečinok s reportami (*.rpt)";
@@ -65,6 +66,7 @@ namespace RefreshReports
             }
             finally
             {
+                _isProcessing = false;
                 lblInfo.Text = INFO_TEXT;
                 btnStartRefresh.Enabled = true;
                 btnStopRefresh.Enabled = false;
@@ -74,6 +76,14 @@ namespace RefreshReports
 
         private void btnStopRefresh_Click(object sender, EventArgs e)
         {
+            var result = MessageBox.Show(
+                    "Prebieha spracovanie reportov.\r\nChcete ho zastaviť?",
+                    "Pozor",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+            if (result == DialogResult.No)
+                return;
+
             _isProcessing = false;
             lblInfo.Text = "Spracovanie reportov bolo zastavené užívateľom";
             btnStopRefresh.Enabled = false;
@@ -159,6 +169,7 @@ namespace RefreshReports
             var sbErrors = new System.Text.StringBuilder();
             int errorsCount = 0;
             int updatedCount = 0;
+            int processedCount = 0;
 
             var sw = Stopwatch.StartNew();
 
@@ -179,12 +190,20 @@ namespace RefreshReports
                     OpenReport(out process, out hwndMain, file);
                     try
                     {
-                        if (!_isProcessing) break;
+                        if (!_isProcessing)
+                        {
+                            sbInfos.Append("\tBREAK");
+                            break;
+                        }
 
                         var retInfo = ReportOperations.VerifyDatabase(hwndMain);
                         sbInfos.Append($"\t{retInfo}");
 
-                        if (!_isProcessing) break;
+                        if (!_isProcessing)
+                        {
+                            sbInfos.Append("\tBREAK");
+                            break;
+                        }
 
                         if (CloseAndSaveReport(process, hwndMain))
                         {
@@ -203,6 +222,7 @@ namespace RefreshReports
                     sbErrors.AppendLine(ex.Message);
                     errorsCount++;
                 }
+                processedCount++;
                 sbInfos.AppendLine();
             }
 
@@ -210,7 +230,7 @@ namespace RefreshReports
             string timeElapsed = sw.Elapsed.ToString(@"hh\:mm\:ss");
 
             var summary = (_isProcessing ? string.Empty : "!!! Spracovanie reportov bolo zastavené užívateľom !!!\r\n\r\n") +
-                $"Počet spracovaný reportov:\t\t\t{reportFiles.Length}\r\n" +
+                $"Počet spracovaný reportov:\t\t\t{processedCount}/{reportFiles.Length}\r\n" +
                             $"Počet aktualizovaných(uložených) reportov:\t{updatedCount}\r\n" +
                             $"Počet chýb:\t{errorsCount}\r\n" +
                             $"Čas spracovania:\t{timeElapsed}" +
@@ -241,14 +261,14 @@ namespace RefreshReports
             process = Process.Start(psi);
             Win32ApiFunctions.AssignToJob(process);
             Thread.Sleep(500);
-
+            
             //Find main window of Crystal and set it to foreground.
             hwndMain = Win32ApiFunctions.WaitForMainWindow(process, TimeSpan.FromSeconds(10));
             if (hwndMain == IntPtr.Zero)
                 throw new Exception("Crystal Reports main window not found.");
 
-            Win32ApiFunctions.SetForegroundWindow(hwndMain);
-            Thread.Sleep(200);
+            //Win32ApiFunctions.SetForegroundWindow(hwndMain);
+            //Thread.Sleep(200);
         }
 
         private static bool CloseAndSaveReport(Process process, IntPtr hwndMain)
